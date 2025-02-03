@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Shortener;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ShortenerController extends Controller
@@ -9,17 +12,20 @@ class ShortenerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
-        //
-    }
+        $request->validate([
+            'per_page' => 'integer|min:5|max:20|nullable',
+            'page' => 'integer|min:1|nullable',
+        ]);
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        $per_page = $request->input('per_page', 5);
+        $page = $request->input('page', 1);
+
+        return response()->json(
+            Shortener::orderBy('clicks', 'desc')
+                ->paginate($per_page, ['*'], 'page', $page)
+        );
     }
 
     /**
