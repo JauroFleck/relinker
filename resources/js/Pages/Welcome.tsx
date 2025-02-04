@@ -8,7 +8,8 @@ interface Shortener {
     original_url: string;
     author_email: string;
     is_enabled: boolean;
-    is_validated: boolean;
+    is_valid: boolean;
+    response_time: number;
     clicks: number;
 }
 
@@ -88,6 +89,29 @@ const Welcome = () => {
         });
     }
 
+    const deleteShortened = (id: number) => (event: React.MouseEvent) => {
+        axios.delete(route('shorteners.destroy', { shortener: id }))
+        .then(response => {
+            axios.get(route('shorteners.index', { page: shortenerPagination?.current_page, per_page: shortenerPagination?.per_page })).then(response => {
+                setShortenerPagination(response.data);
+            });
+        }).catch(error => {
+            console.log(error.response.data);
+        });
+    }
+
+    const validateUrl = (id: number) => (event: React.MouseEvent) => {
+        axios.put(route('validateUrl', { id: id }))
+        .then(response => {
+            console.log(response.data);
+            axios.get(route('shorteners.index', { page: shortenerPagination?.current_page, per_page: shortenerPagination?.per_page })).then(response => {
+                setShortenerPagination(response.data);
+            });
+        }).catch(error => {
+            console.log(error.response.data);
+        });
+    }
+
     return (
         <MainLayout title="Home">
             <div className="container p-5 mx-auto my-5 bg-gray-200 dark:bg-slate-800 rounded-lg shadow-lg dark:text-gray-200">
@@ -106,13 +130,13 @@ const Welcome = () => {
                                     <th scope="col" className="px-6 py-3">
                                         Author e-mail
                                     </th>
-                                    <th scope="col" className="px-6 py-3">
+                                    <th scope="col" className="px-6 py-3 text-center">
                                         Enabled
                                     </th>
-                                    <th scope="col" className="px-6 py-3">
+                                    <th scope="col" className="px-6 py-3 text-center">
                                         Validated
                                     </th>
-                                    <th scope="col" className="px-6 py-3">
+                                    <th scope="col" className="px-6 py-3 text-center">
                                         Clicks
                                     </th>
                                     <th scope="col" className="px-6 py-3">
@@ -132,17 +156,22 @@ const Welcome = () => {
                                         <td className="px-6 py-4">
                                             {shortener.author_email}
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-4 text-center">
                                             {shortener.is_enabled ? 'Yes' : 'No'}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            {shortener.is_validated != null ? 'Yes' : 'No'}
+                                        <td className="px-6 py-4 relative flex">
+                                            <span className="w-full text-center">{shortener.is_valid != null ? (`Yes (${shortener.response_time}ms)`) : 'No'}</span>
+                                            <svg onClick={validateUrl(shortener.id)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="hover:cursor-pointer hover:text-blue-500 size-4 absolute right-12"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
                                         </td>
-                                        <td className="px-6 py-4 dark:text-white font-bold">
+                                        <td className="px-6 py-4 dark:text-white font-bold text-center">
                                             {shortener.clicks}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
+                                            <a href="#" onClick={deleteShortened(shortener.id)} className="font-medium text-red-600 dark:text-red-500 hover:underline">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M6 2a1 1 0 011-1h6a1 1 0 011 1v1h3a1 1 0 110 2h-1v11a2 2 0 01-2 2H5a2 2 0 01-2-2V5H2a1 1 0 110-2h3V2zm2 1v1h4V3H8zm-3 4v9a1 1 0 001 1h8a1 1 0 001-1V7H5z" clipRule="evenodd" />
+                                                </svg>
+                                            </a>
                                         </td>
                                     </tr>
                                 ))}

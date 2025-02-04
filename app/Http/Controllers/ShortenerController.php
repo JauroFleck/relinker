@@ -57,34 +57,16 @@ class ShortenerController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
-        //
+        $shortener = Shortener::findOrFail($id);
+
+        $shortener->delete();
+
+        return response()->json([
+            'message' => 'Shortened URL deleted successfully.',
+        ], 200);
     }
 }
