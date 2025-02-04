@@ -14,52 +14,38 @@ class ShortenerValidationController extends Controller
     {
         $shortener = Shortener::findOrFail($id);
         
-        $url = config('app.url').'/'.$shortener->shortened_url;
+        $url = config('app.internal_url').'/'.$shortener->shortened_url;
+
+        Log::info("Validating URL: $url");
 
         $ch = curl_init($url);
 
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HEADER, true); // Capturar cabeçalhos HTTP
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_NOBODY, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_PORT, 8000);
 
-        $start = microtime(true);
-        $response = curl_exec($ch);
-        $end = microtime(true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 10000);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-        if ($response === false) {
-            // Se houver erro, capturar mensagem de erro do cURL
-            $error = curl_error($ch);
-            $errorCode = curl_errno($ch);
-            curl_close($ch);
-            Log::error('cURL Error', [
-                'error' => $error,
-                'code' => $errorCode
-            ]);
-        }
+        curl_exec($ch);
 
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $finalUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
-        $responseTime = round(($end - $start) * 1000, 2); // Tempo em ms
-
-        // Separar cabeçalhos e corpo da resposta
-        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-        $headers = substr($response, 0, $headerSize);
-        $body = substr($response, $headerSize);
+        $ttfb = curl_getinfo($ch, CURLINFO_TOTAL_TIME) * 1000;
 
         curl_close($ch);
 
         if ($httpCode >= 200 && $httpCode < 400) {
             $shortener->update([
-                'response_time' => $responseTime,
+                'response_time' => $ttfb,
                 'is_valid' => true,
             ]);
 
             return response()->json([
+                'httpCode' => $httpCode,
                 'message' => 'URL válida',
             ], 200);
         } else {
@@ -70,6 +56,7 @@ class ShortenerValidationController extends Controller
 
             return response()->json([
                 'message' => 'URL inválida',
+                'httpCode' => $httpCode,
             ], 400);
         }
     }

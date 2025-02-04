@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('shortener_id')->constrained()->onDelete('cascade');
             $table->ipAddress();
-            $table->string('user_agent');
+            $table->string('user_agent')->nullable();
             $table->timestamp('accessed_at');
         });
     }
