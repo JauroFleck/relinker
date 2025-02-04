@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('author_email');
             $table->string('original_url');
-            $table->string('shortened_url');
+            $table->string('shortened_url')->index();
             $table->boolean('is_enabled')->default(true);
             $table->boolean('is_valid')->nullable();
             $table->double('response_time')->nullable();

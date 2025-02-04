@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Shortener;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,7 +32,28 @@ class ShortenerController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'original_url' => 'required|url',
+            'desired_url' => 'string|nullable',
+            'author_email' => 'required|email',
+        ]);
+
+        if (Shortener::where('shortened_url', $request->input('desired_url'))->count() > 0) {
+            return response()->json([
+                'message' => 'The desired URL is already taken.',
+            ], 400);
+        }
+
+        $shortener = Shortener::create([
+            'original_url' => $request->input('original_url'),
+            'shortened_url' => $request->input('desired_url') ?? Shortener::generateShortenedUrl(),
+            'author_email' => $request->input('author_email'),
+        ]);
+
+        return response()->json([
+            'message' => 'Shortened URL created successfully.',
+            'shortener' => $shortener,
+        ], 201);
     }
 
     /**

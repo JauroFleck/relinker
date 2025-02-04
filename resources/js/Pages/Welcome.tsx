@@ -68,8 +68,28 @@ const Welcome = () => {
         });
     }
 
+    function submitNewURL() {
+        const original_url = (document.getElementById('original_url') as HTMLInputElement).value;
+        const shortened_url = (document.getElementById('shortened_url') as HTMLInputElement).value;
+        const author_email = (document.getElementById('author_email') as HTMLInputElement).value;
+
+        axios.post(route('shorteners.store'), {
+            original_url: original_url,
+            desired_url: shortened_url,
+            author_email: author_email
+        }).then(response => {
+            
+            axios.get(route('shorteners.index', { page: shortenerPagination?.current_page, per_page: shortenerPagination?.per_page })).then(response => {
+                setShortenerPagination(response.data);
+            });
+
+        }).catch(error => {
+            console.log(error.response.data);
+        });
+    }
+
     return (
-        <MainLayout>
+        <MainLayout title="Home">
             <div className="container p-5 mx-auto my-5 bg-gray-200 dark:bg-slate-800 rounded-lg shadow-lg dark:text-gray-200">
                 <h1 className="text-3xl font-semibold text-center mb-3">Shortened URLs</h1>
                 {shortenerPagination ? (
@@ -104,7 +124,7 @@ const Welcome = () => {
                                 {shortenerPagination.data.map((shortener: Shortener) => (
                                     <tr key={shortener.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
                                         <td className="px-6 py-4 text-black dark:text-gray-200 font-bold">
-                                        <a href={shortener.shortened_url} target="_blank">short url</a>
+                                        <a href={shortener.shortened_url} target="_blank">{route('home') + '/' + shortener.shortened_url}</a>
                                         </td>
                                         <td className="px-6 py-4 truncate max-w-md" title={shortener.original_url}>
                                             <a href={shortener.original_url} target="_blank">{shortener.original_url}</a>
@@ -240,6 +260,31 @@ const Welcome = () => {
                         </table>
                     </div>
                 )}
+                <div className="mt-8 rounded bg-gray-100 dark:bg-sky-950 p-5">
+                    <h2 className="text-2xl font-semibold text-center mb-3">Add New URL</h2>
+                    <form className="grid grid-cols-9 gap-3">
+                        <div className="col-span-4">
+                            <label htmlFor="original_url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Original URL</label>
+                            <input type="text" id="original_url" name="shortened_url" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-stone-800 focus:border-stone-800 sm:text-sm dark:bg-gray-500 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
+                        </div>
+                        <div className="col-span-2">
+                            <label htmlFor="shortened_url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Desired Shortened URL (optional)</label>
+                            <div className="flex">
+                                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm dark:bg-gray-600 dark:text-gray-300 dark:border-gray-600 select-none">
+                                    {route('home')}/
+                                </span>
+                                <input type="text" id="shortened_url" name="prefix" className="flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300 focus:ring-stone-800 focus:border-stone-800 dark:bg-gray-500 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
+                            </div>
+                        </div>
+                        <div className="col-span-2">
+                            <label htmlFor="author_email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Author E-mail</label>
+                            <input type="email" id="author_email" name="author_email" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-stone-800 focus:border-stone-800 sm:text-sm dark:bg-gray-500 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" required />
+                        </div>
+                        <div className="text-center col-span-1 flex">
+                            <button type="button" onClick={submitNewURL} className="mt-auto inline-flex justify-center py-2 px-8 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Add URL</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </MainLayout>
     )
