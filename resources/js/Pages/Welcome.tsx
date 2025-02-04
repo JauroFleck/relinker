@@ -39,6 +39,8 @@ const Welcome = () => {
 
     const [shortenerPagination, setShortenerPagination] = useState<ShortenerPagination>();
 
+    const [isValidating, setIsValidating] = useState<Number[]>([]);
+
     useEffect(() => {
         axios.get(route('shorteners.index')).then(response => {
             console.log(response.data);
@@ -100,16 +102,19 @@ const Welcome = () => {
         });
     }
 
-    const validateUrl = (id: number) => (event: React.MouseEvent) => {
+    const validateUrl = (id: number) => async (event: React.MouseEvent) => {
+        setIsValidating((prev) => [...prev, id]);
         axios.put(route('validateUrl', { id: id }))
-        .then(response => {
-            console.log(response.data);
-            axios.get(route('shorteners.index', { page: shortenerPagination?.current_page, per_page: shortenerPagination?.per_page })).then(response => {
-                setShortenerPagination(response.data);
+            .then(response => {
+                console.log(response.data);
+                axios.get(route('shorteners.index', { page: shortenerPagination?.current_page, per_page: shortenerPagination?.per_page })).then(response => {
+                    setShortenerPagination(response.data);
+                });
+            }).catch(error => {
+                console.log(error.response.data);
+            }).finally(() => {
+                setIsValidating((prev) => prev.filter(validatingId => validatingId !== id));
             });
-        }).catch(error => {
-            console.log(error.response.data);
-        });
     }
 
     return (
@@ -136,7 +141,7 @@ const Welcome = () => {
                                     <th scope="col" className="px-6 py-3 text-center">
                                         Validated
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-center">
+                                    <th scope="col" className="px-6 py-3 text-end">
                                         Clicks
                                     </th>
                                     <th scope="col" className="px-6 py-3">
@@ -160,10 +165,19 @@ const Welcome = () => {
                                             {shortener.is_enabled ? 'Yes' : 'No'}
                                         </td>
                                         <td className="px-6 py-4 relative flex">
-                                            <span className="w-full text-center">{shortener.is_valid != null ? (`Yes (${shortener.response_time}ms)`) : 'No'}</span>
-                                            <svg onClick={validateUrl(shortener.id)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="hover:cursor-pointer hover:text-blue-500 size-4 absolute right-12"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+                                            {isValidating.includes(shortener.id) ? (
+                                                <svg className="animate-spin h-5 w-5 text-gray-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                            ) : (
+                                                <>
+                                                    <span className="w-full text-center">{shortener.is_valid == true ? (`Yes [${shortener.response_time || 0}ms]`) : 'No'}&nbsp;</span>
+                                                    <svg onClick={validateUrl(shortener.id)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="hover:cursor-pointer hover:text-blue-500 size-4 absolute right-2"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+                                                </>
+                                            )}
                                         </td>
-                                        <td className="px-6 py-4 dark:text-white font-bold text-center">
+                                        <td className="px-6 py-4 dark:text-white font-bold text-end">
                                             {shortener.clicks}
                                         </td>
                                         <td className="px-6 py-4 text-right">
