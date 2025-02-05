@@ -20,24 +20,31 @@ WORKDIR /var/www/html
 # Copia os arquivos do Laravel para o container
 COPY . .
 
-# Instala as dependências do Laravel
+# Instala as dependências do projeto
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && composer install --no-dev --optimize-autoloader
+    && npm install
 
-# Instala as dependências do Node.js
-RUN npm install && npm run build
+#Instala o opcache
+RUN docker-php-ext-install opcache
+
+# Instala dependências apenas em produção
+ARG APP_ENV
+RUN if [ "$APP_ENV" = "production" ]; then \
+        composer install --no-dev --optimize-autoloader; \
+    else \
+        composer install; \
+    fi
+
+RUN npm run build
+
+# Copia o arquivo de configuração do opcache
+COPY .docker/php/opcache.${APP_ENV}.ini /usr/local/etc/php/conf.d/opcache.ini
 
 # Permissões corretas para o storage e cache
 RUN chmod -R 775 storage bootstrap/cache
 
 # Copia o arquivo de configuração do Apache
 COPY .docker/apache/vhost.conf /etc/apache2/sites-available/000-default.conf
-
-#Instala o opcache
-RUN docker-php-ext-install opcache
-
-# Copia o arquivo de configuração do opcache
-COPY .docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
 # Copia o script para o container
 COPY .docker/entrypoint.sh /usr/local/bin/entrypoint.sh
