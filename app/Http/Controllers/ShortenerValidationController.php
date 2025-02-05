@@ -55,8 +55,8 @@ class ShortenerValidationController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'URL inválida',
                 'httpCode' => $httpCode,
+                'message' => 'URL inválida',
             ], 400);
         }
     }

@@ -9,7 +9,7 @@ until nc -z -v -w30 db 5432; do
 done
 
 echo "Banco de dados pronto, rodando migrations..."
-php artisan migrate:fresh --seed
+php artisan migrate:fresh --seed --force
 
 # Inicia o Apache
 apache2-foreground

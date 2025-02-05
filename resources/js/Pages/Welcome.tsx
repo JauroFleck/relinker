@@ -107,13 +107,18 @@ const Welcome = () => {
         axios.put(route('validateUrl', { id: id }))
             .then(response => {
                 console.log(response.data);
-                axios.get(route('shorteners.index', { page: shortenerPagination?.current_page, per_page: shortenerPagination?.per_page })).then(response => {
-                    setShortenerPagination(response.data);
-                });
+                axios.get(route('shorteners.index', { page: shortenerPagination?.current_page, per_page: shortenerPagination?.per_page }))
+                    .then(response => {
+                        setShortenerPagination(response.data);
+                        setIsValidating((prev) => prev.filter(validatingId => validatingId !== id));
+                    });
             }).catch(error => {
                 console.log(error.response.data);
-            }).finally(() => {
-                setIsValidating((prev) => prev.filter(validatingId => validatingId !== id));
+                axios.get(route('shorteners.index', { page: shortenerPagination?.current_page, per_page: shortenerPagination?.per_page }))
+                    .then(response => {
+                        setShortenerPagination(response.data);
+                        setIsValidating((prev) => prev.filter(validatingId => validatingId !== id));
+                    });
             });
     }
 
@@ -172,7 +177,7 @@ const Welcome = () => {
                                                 </svg>
                                             ) : (
                                                 <>
-                                                    <span className="w-full text-center">{shortener.is_valid == true ? (`Yes [${shortener.response_time || 0}ms]`) : 'No'}&nbsp;</span>
+                                                    <span className="w-full text-center">{shortener.is_valid == true ? (`Yes [${Math.ceil(shortener.response_time) || 0}ms]`) : 'No'}&nbsp;</span>
                                                     <svg onClick={validateUrl(shortener.id)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="hover:cursor-pointer hover:text-blue-500 size-4 absolute right-2"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
                                                 </>
                                             )}

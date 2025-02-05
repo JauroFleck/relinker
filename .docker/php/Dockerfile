@@ -24,8 +24,9 @@ COPY . .
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
     && npm install
 
-#Instala o opcache
+#Instala e configura o opcache
 RUN docker-php-ext-install opcache
+COPY .docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
 # Instala dependências apenas em produção
 ARG APP_ENV
@@ -37,11 +38,12 @@ RUN if [ "$APP_ENV" = "production" ]; then \
 
 RUN npm run build
 
-# Copia o arquivo de configuração do opcache
-COPY .docker/php/opcache.${APP_ENV}.ini /usr/local/etc/php/conf.d/opcache.ini
-
-# Permissões corretas para o storage e cache
-RUN chmod -R 775 storage bootstrap/cache
+# Permissões de diretórios
+RUN chown -R www-data:www-data .
+RUN find . -type f -exec chmod 644 {} \;
+RUN find . -type d -exec chmod 755 {} \;
+RUN chgrp -R www-data storage bootstrap/cache
+RUN chmod -R ug+rwx storage bootstrap/cache
 
 # Copia o arquivo de configuração do Apache
 COPY .docker/apache/vhost.conf /etc/apache2/sites-available/000-default.conf

@@ -40,8 +40,8 @@ class Shortener extends Model
     {
         $count = 0;
         do {
-            $shortened_url = Str::random(3 + ($count / 4));
-        } while (Shortener::where('shortened_url', $shortened_url)->count() > 0 && ++$count);
+            $shortened_url = Str::random(3 + (int)($count++ / 4));
+        } while (Shortener::where('shortened_url', $shortened_url)->count() > 0);
 
         return $shortened_url;
     }
