@@ -3,7 +3,6 @@ FROM php:8.4-apache
 
 # Instala extensões necessárias para Laravel e PostgreSQL
 RUN apt-get update && apt-get install -y \
-    netcat-traditional \
     libpq-dev \
     unzip \
     curl \
@@ -29,13 +28,7 @@ RUN docker-php-ext-install opcache
 COPY .docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
 # Instala dependências apenas em produção
-ARG APP_ENV
-RUN if [ "$APP_ENV" = "production" ]; then \
-        composer install --no-dev --optimize-autoloader; \
-    else \
-        composer install; \
-    fi
-
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN npm run build
 
 # Permissões de diretórios
@@ -48,10 +41,6 @@ RUN chmod -R ug+rwx storage bootstrap/cache
 # Copia o arquivo de configuração do Apache
 COPY .docker/apache/vhost.conf /etc/apache2/sites-available/000-default.conf
 
-# Copia o script para o container
-COPY .docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
 # Adiciona o ServerName ao arquivo de configuração do Apache
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
@@ -59,4 +48,4 @@ RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 EXPOSE 80
 
 # Define o script como comando de inicialização
-CMD ["/usr/local/bin/entrypoint.sh"]
+CMD ["apache2-foreground"]
